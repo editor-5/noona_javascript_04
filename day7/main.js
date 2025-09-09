@@ -65,10 +65,15 @@ function play(){
 
 function reset(){
     // user input창이 깨끗하게 정리되고
-    userInput.value = ""
+    userInput.value = "";
     // 새로운 번호가 생성되고
     pickRandomNum();
-
+    // 남은 횟수, 게임 상태, 입력 기록 초기화
+    chances = 5;
+    gameOver = false;
+    history = [];
+    chanceArea.textContent = `남은기회:${chances}번`;
+    playButton.disabled = false;
     resultArea.textContent="결과값이 여기 나옵니다.";
 }
 pickRandomNum();
