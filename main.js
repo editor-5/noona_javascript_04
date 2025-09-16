@@ -65,7 +65,13 @@ const render = () => {
         if (!desc) desc = '내용없음';
         if (desc.length > 200) desc = desc.slice(0, 200) + '...';
         let imgSrc = news.urlToImage ? news.urlToImage : '';
-        let imgTag = imgSrc ? `<img class="news-img-size" src="${imgSrc}"/>` : '<div class="news-img-size no-image">no image</div>';
+        // 이미지가 없으면 no image div, 이미지가 있지만 깨지면 onerror로 대체
+        let imgTag = '';
+        if (!imgSrc) {
+            imgTag = '<div class="news-img-size no-image">no image</div>';
+        } else {
+            imgTag = `<img class="news-img-size" src="${imgSrc}" onerror="this.onerror=null;this.src='';this.classList.add('no-image');this.alt='no image';this.style.background='#f0f0f0';this.style.color='#888';this.style.display='flex';this.style.alignItems='center';this.style.justifyContent='center';this.value='no image';" alt="no image"/>`;
+        }
         let sourceName = (news.source && news.source.name) ? news.source.name : 'no source';
         let published = news.publishedAt ? timeAgo(news.publishedAt) : '';
         return `
