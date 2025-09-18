@@ -1,43 +1,60 @@
+// 상단 인풋창+돋보기 검색 이벤트 연결
+document.addEventListener("DOMContentLoaded", function() {
+    const searchBarInput = document.getElementById('search-bar-input');
+    const searchBarBtn = document.getElementById('search-bar-btn');
+    if (searchBarInput && searchBarBtn) {
+        searchBarBtn.addEventListener('click', function() {
+            const keyword = searchBarInput.value.trim();
+            searchNewsByKeyword(keyword);
+        });
+        searchBarInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const keyword = searchBarInput.value.trim();
+                searchNewsByKeyword(keyword);
+            }
+        });
+    }
+});
+// ====== [과제 연습용: newsapi.org] ======
 
-/*
-과제명: 뉴스 만들기 사이트 (누나타임즈)
-제출자: [이름/학번 입력]
-제출일: 2025-09-16
-
-※ 제출용 안내 ※
- - 제출 시 반드시 아래 API 주소를 사용해야 합니다.
-     https://noona-times-be-5ca9402f90d9.herokuapp.com/
- - 지원 기능:
-     1. 키워드 검색: ?q=키워드
-     2. 페이지네이션: ?page=숫자&pageSize=숫자
-     3. 카테고리: ?category=카테고리명
-     (카테고리: business, entertainment, general, health, science, technology, sports)
-     예시: /top-headlines?q=아이유&page=1&pageSize=20&category=science
-*/
-
-const BASE_URL = 'https://noona-times-be-5ca9402f90d9.herokuapp.com';
-
-// 동적으로 url을 생성하는 함수
+// ====== [연습용: newsapi.org] ======
+// ====== [과제 제출용: 프록시 서버] ======
+const BASE_URL = `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines`;
+// 동적으로 url을 생성하는 함수 (프록시 서버용)
 function makeNewsUrl({q, page, pageSize, category} = {}) {
-        const url = new URL(BASE_URL + '/top-headlines');
-        if (q) url.searchParams.set('q', q);
-        if (page) url.searchParams.set('page', page);
-        if (pageSize) url.searchParams.set('pageSize', pageSize);
-        if (category) url.searchParams.set('category', category);
-        return url;
+    const url = new URL(BASE_URL);
+    if (q) url.searchParams.set('q', q);
+    if (page) url.searchParams.set('page', page);
+    if (pageSize) url.searchParams.set('pageSize', pageSize);
+    if (category) url.searchParams.set('category', category);
+    return url;
 }
-
-
 let newsList = [];
 // 기본 뉴스 불러오기 (최신 뉴스)
 const getLatestNews = async (options = {}) => {
     const url = makeNewsUrl(options);
     const response = await fetch(url);
     const data = await response.json();
-    // API 구조에 따라 articles 또는 data 자체가 배열일 수 있음
-    newsList = data.articles || data;
+    newsList = data.articles || [];
     render();
 };
+
+// 검색어로 뉴스 가져오기 (news-board에 렌더)
+async function searchNewsByKeyword(keyword) {
+    if (!keyword) {
+        // 검색어 없으면 최신 뉴스
+        await getLatestNews();
+        return;
+    }
+    await getLatestNews({ q: keyword });
+    // 검색 후 입력창 비우기
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    // 검색 결과 없을 때 안내
+    if (!newsList || newsList.length === 0) {
+        document.getElementById("news-board").innerHTML = '<div style="padding:40px 0;text-align:center;color:#888;font-size:1.3em;">검색 결과가 없습니다.</div>';
+    }
+}
 
 
 function timeAgo(dateString) {
@@ -94,26 +111,67 @@ const render = () => {
     document.getElementById("news-board").innerHTML = newsHTML;
 };
 
-getLatestNews();
+
+
+// DOMContentLoaded에서 검색 모달 인풋 이벤트 연결
 
 document.addEventListener("DOMContentLoaded", function() {
+    // 검색 모달 인풋
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const keyword = searchInput.value.trim();
+                searchNewsByKeyword(keyword);
+                // 모달 닫기 등 추가 동작
+            }
+        });
+    }
+
     const hamburger = document.getElementById("hamburger-btn");
     const sideMenu = document.getElementById("side-menu");
     const closeMenu = document.getElementById("close-menu");
     if (hamburger && sideMenu && closeMenu) {
         hamburger.addEventListener("click", function() {
             sideMenu.classList.add("active");
+            hamburger.style.display = "none";
         });
         closeMenu.addEventListener("click", function() {
             sideMenu.classList.remove("active");
+            hamburger.style.display = "flex";
         });
-        // 바깥 클릭 시 닫기
-        sideMenu.addEventListener("click", function(e) {
-            if (e.target === sideMenu) {
-                sideMenu.classList.remove("active");
-            }
-        });
+        // 사이드바 바깥 클릭 시 닫기 기능 제거 (내부 클릭해도 닫히지 않게)
     }
+    // 모든 카테고리 버튼(사이드+메인)에 클릭 이벤트 등록
+    const allCategoryBtns = document.querySelectorAll('.side-menus button, section .menus button');
+    // 한글-영문 카테고리 매핑
+    const categoryMap = {
+        '사업': 'business',
+        '오락': 'entertainment',
+        '일반': 'general',
+        '건강': 'health',
+        '과학': 'science',
+        '스포츠': 'sports',
+        '기술': 'technology',
+        'business': 'business',
+        'entertainment': 'entertainment',
+        'general': 'general',
+        'health': 'health',
+        'science': 'science',
+        'sports': 'sports',
+        'technology': 'technology'
+    };
+    allCategoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            let category = btn.textContent.trim();
+            category = categoryMap[category] || category.toLowerCase();
+            getLatestNews({ category });
+            if (sideMenu) sideMenu.classList.remove("active");
+            if (hamburger) hamburger.style.display = "flex";
+        });
+    });
+
+    // 검색 모달 관련
     const searchBtn = document.getElementById("search-btn");
     const searchModal = document.getElementById("search-modal");
     const closeSearch = document.getElementById("close-search");
@@ -137,4 +195,15 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+// 페이지 로드시 최신 뉴스도 기존처럼 불러오기 (news-board용)
+getLatestNews();
 
+// (중복 제거됨)
+
+// 카테고리별 뉴스 가져오기 예시 함수
+// 사용 예: getCategoryNews('business');
+function getCategoryNews(category) {
+    getLatestNews({ category });
+}
+// 그뉴스를 보여주기: render() 함수가 newsList를 화면에 출력합니다.
+// getCategoryNews('business') 또는 getLatestNews({category: 'business'}) 호출 시 자동으로 render()가 실행되어 뉴스가 보입니다.
