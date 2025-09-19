@@ -58,6 +58,7 @@ const CONFIG = {
         closeMenu: '#close-menu',
         searchBtn: '#search-btn',
         searchModal: '#search-modal',
+        searchModalBtn: '#search-modal-btn',
         closeSearch: '#close-search',
         searchModalBg: '.search-modal-bg',
         newsBoard: '#news-board',
@@ -382,6 +383,7 @@ const UIController = {
                 closeMenu: document.querySelector(CONFIG.SELECTORS.closeMenu),
                 searchBtn: document.querySelector(CONFIG.SELECTORS.searchBtn),
                 searchModal: document.querySelector(CONFIG.SELECTORS.searchModal),
+                searchModalBtn: document.querySelector(CONFIG.SELECTORS.searchModalBtn),
                 closeSearch: document.querySelector(CONFIG.SELECTORS.closeSearch),
                 searchModalBg: document.querySelector(CONFIG.SELECTORS.searchModalBg),
                 categoryBtns: document.querySelectorAll(CONFIG.SELECTORS.categoryBtns)
@@ -467,7 +469,7 @@ const UIController = {
 
     bindModalEvents() {
         try {
-            const { searchBtn, searchModal, closeSearch, searchModalBg } = this.elements;
+            const { searchBtn, searchModal, searchModalBtn, closeSearch, searchModalBg } = this.elements;
 
             if (searchBtn && searchModal) {
                 searchBtn.addEventListener('click', () => {
@@ -475,6 +477,16 @@ const UIController = {
                         this.openSearchModal();
                     } catch (error) {
                         ErrorHandler.logError(error, 'UIController.bindModalEvents - searchBtn click');
+                    }
+                });
+            }
+
+            if (searchModalBtn) {
+                searchModalBtn.addEventListener('click', () => {
+                    try {
+                        this.performSearch();
+                    } catch (error) {
+                        ErrorHandler.logError(error, 'UIController.bindModalEvents - searchModalBtn click');
                     }
                 });
             }
@@ -596,6 +608,23 @@ const UIController = {
             }
         } catch (error) {
             ErrorHandler.logError(error, 'UIController.closeSearchModal');
+        }
+    },
+
+    performSearch() {
+        try {
+            const { searchInput } = this.elements;
+            if (searchInput) {
+                const keyword = searchInput.value.trim();
+                if (keyword) {
+                    NewsApp.performSearch(keyword);
+                    this.closeSearchModal();
+                } else {
+                    ErrorHandler.logError(new Error('Empty search keyword'), 'UIController.performSearch');
+                }
+            }
+        } catch (error) {
+            ErrorHandler.logError(error, 'UIController.performSearch');
         }
     }
 };
