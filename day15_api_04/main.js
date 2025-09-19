@@ -52,14 +52,13 @@ const CONFIG = {
         '기술': 'technology'
     },
     SELECTORS: {
-        searchBarInput: '#search-bar-input',
-        searchBarBtn: '#search-bar-btn',
         searchInput: '#search-input',
         hamburgerBtn: '#hamburger-btn',
         sideMenu: '#side-menu',
         closeMenu: '#close-menu',
         searchBtn: '#search-btn',
         searchModal: '#search-modal',
+        searchModalBtn: '#search-modal-btn',
         closeSearch: '#close-search',
         searchModalBg: '.search-modal-bg',
         newsBoard: '#news-board',
@@ -378,21 +377,20 @@ const UIController = {
     cacheElements() {
         try {
             this.elements = {
-                searchBarInput: document.querySelector(CONFIG.SELECTORS.searchBarInput),
-                searchBarBtn: document.querySelector(CONFIG.SELECTORS.searchBarBtn),
                 searchInput: document.querySelector(CONFIG.SELECTORS.searchInput),
                 hamburgerBtn: document.querySelector(CONFIG.SELECTORS.hamburgerBtn),
                 sideMenu: document.querySelector(CONFIG.SELECTORS.sideMenu),
                 closeMenu: document.querySelector(CONFIG.SELECTORS.closeMenu),
                 searchBtn: document.querySelector(CONFIG.SELECTORS.searchBtn),
                 searchModal: document.querySelector(CONFIG.SELECTORS.searchModal),
+                searchModalBtn: document.querySelector(CONFIG.SELECTORS.searchModalBtn),
                 closeSearch: document.querySelector(CONFIG.SELECTORS.closeSearch),
                 searchModalBg: document.querySelector(CONFIG.SELECTORS.searchModalBg),
                 categoryBtns: document.querySelectorAll(CONFIG.SELECTORS.categoryBtns)
             };
 
             // 필수 요소들이 있는지 확인
-            const requiredElements = ['searchBarInput', 'searchBarBtn'];
+            const requiredElements = ['searchInput', 'searchBtn'];
             const missingElements = requiredElements.filter(key => !this.elements[key]);
             
             if (missingElements.length > 0) {
@@ -419,31 +417,7 @@ const UIController = {
 
     bindSearchEvents() {
         try {
-            const { searchBarInput, searchBarBtn, searchInput } = this.elements;
-
-            if (searchBarInput && searchBarBtn) {
-                searchBarBtn.addEventListener('click', () => {
-                    try {
-                        const keyword = searchBarInput.value.trim();
-                        NewsApp.performSearch(keyword);
-                    } catch (error) {
-                        ErrorHandler.logError(error, 'UIController.bindSearchEvents - searchBarBtn click');
-                        ErrorHandler.showSearchError();
-                    }
-                });
-
-                searchBarInput.addEventListener('keydown', (e) => {
-                    try {
-                        if (e.key === 'Enter') {
-                            const keyword = searchBarInput.value.trim();
-                            NewsApp.performSearch(keyword);
-                        }
-                    } catch (error) {
-                        ErrorHandler.logError(error, 'UIController.bindSearchEvents - searchBarInput keydown');
-                        ErrorHandler.showSearchError();
-                    }
-                });
-            }
+            const { searchInput } = this.elements;
 
             if (searchInput) {
                 searchInput.addEventListener('keydown', (e) => {
@@ -495,7 +469,7 @@ const UIController = {
 
     bindModalEvents() {
         try {
-            const { searchBtn, searchModal, closeSearch, searchModalBg } = this.elements;
+            const { searchBtn, searchModal, searchModalBtn, closeSearch, searchModalBg } = this.elements;
 
             if (searchBtn && searchModal) {
                 searchBtn.addEventListener('click', () => {
@@ -503,6 +477,16 @@ const UIController = {
                         this.openSearchModal();
                     } catch (error) {
                         ErrorHandler.logError(error, 'UIController.bindModalEvents - searchBtn click');
+                    }
+                });
+            }
+
+            if (searchModalBtn) {
+                searchModalBtn.addEventListener('click', () => {
+                    try {
+                        this.performSearch();
+                    } catch (error) {
+                        ErrorHandler.logError(error, 'UIController.bindModalEvents - searchModalBtn click');
                     }
                 });
             }
@@ -624,6 +608,23 @@ const UIController = {
             }
         } catch (error) {
             ErrorHandler.logError(error, 'UIController.closeSearchModal');
+        }
+    },
+
+    performSearch() {
+        try {
+            const { searchInput } = this.elements;
+            if (searchInput) {
+                const keyword = searchInput.value.trim();
+                if (keyword) {
+                    NewsApp.performSearch(keyword);
+                    this.closeSearchModal();
+                } else {
+                    ErrorHandler.logError(new Error('Empty search keyword'), 'UIController.performSearch');
+                }
+            }
+        } catch (error) {
+            ErrorHandler.logError(error, 'UIController.performSearch');
         }
     }
 };
